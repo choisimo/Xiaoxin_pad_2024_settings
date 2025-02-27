@@ -21,30 +21,35 @@ echo If more than one device is listed, use -s <serial> or remove extra devices.
 pause
 
 REM Step 1: Download APKs from Google Drive (may fail)
-echo [STEP 1] Attempting to download 3 APKs via PowerShell...
-set PLAYSTORE_URL=https://drive.google.com/file/d/1Wqrf8qK_1Rg5uRU9MKOPbUxsaN5Wc7yH/view?usp=sharing
-set PLAYSERVICES_URL=https://drive.google.com/file/d/1OV6x9WFw1sje9w2vtWM1JLEoSq8Fgl4S/view?usp=sharing
-set SETEDIT_URL=https://drive.google.com/file/d/112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e/view?usp=sharing
+echo [STEP 1] Attempting to download APKs via PowerShell...
 
-REM Downloading (may end up with .html if Google blocks direct link)
+set PLAYSTORE_URL=https://docs.google.com/uc?export=download&id=1Wqrf8qK_1Rg5uRU9MKOPbUxsaN5Wc7yH
+set SETEDIT_URL=https://docs.google.com/uc?export=download&id=112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e
+set PLAYSERVICES_URL=https://docs.google.com/uc?export=download&id=1OV6x9WFw1sje9w2vtWM1JLEoSq8Fgl4S
+set GBOARD_URL=https://docs.google.com/uc?export=download&id=1n6CrGQL0zCsWOyKgbJVy3iZyhQQrrDmQ
+
+REM Download them (if direct link fails, the result may be HTML):
 powershell -Command "Invoke-WebRequest -Uri %PLAYSTORE_URL% -OutFile PlayStore.apk"
-powershell -Command "Invoke-WebRequest -Uri %PLAYSERVICES_URL% -OutFile PlayServices.apk"
 powershell -Command "Invoke-WebRequest -Uri %SETEDIT_URL% -OutFile SetEdit.apk"
+powershell -Command "Invoke-WebRequest -Uri %PLAYSERVICES_URL% -OutFile PlayServices.apk"
+powershell -Command "Invoke-WebRequest -Uri %GBOARD_URL% -OutFile Gboard.apk"
 
 echo --------------------------------------------------
-echo Check if the downloaded files are actual APK files.
+echo Check if the downloaded files are real APK files.
 echo If they are HTML or 0KB, please manually download.
 pause
 
 REM Step 2: Install each APK
-echo [STEP 2] Installing PlayStore, PlayServices, SetEdit...
+echo [STEP 2] Installing PlayStore, PlayServices, SetEdit, Gboard...
 adb install PlayStore.apk
 adb install PlayServices.apk
 adb install SetEdit.apk
+adb install Gboard.apk
 
 echo -------------------------------------------
 echo Make sure installation succeeded. If any fails:
 echo  - Possibly rename or re-download the actual .apk
+
 echo  - Then run 'adb install <filename>' manually
 pause
 
@@ -107,25 +112,19 @@ REM Step 5: Grant SetEdit permission and set system language to ko-KR
 
 echo [STEP 5] Setting up Korean locale and default Gboard...
 
-REM 5.1) If you want Gboard, you could do:
-echo Checking if Gboard is installed. (Optional step)
-REM adb install Gboard.apk   REM (Manually place Gboard.apk if you have it)
-
 REM 5.2) Grant SetEdit permission for WRITE_SECURE_SETTINGS
 adb shell pm grant by4a.setedit22 android.permission.WRITE_SECURE_SETTINGS
 
 REM 5.3) Attempt to set system locale to Korean (ko-KR)
-REM Note: Some devices may require a reboot to reflect changes.
-
 adb shell settings put system system_locales ko-KR
 
-REM 5.4) Set Gboard as default IME (if installed). For example:
+REM 5.4) Set Gboard as default IME
 REM Gboard package name is typically com.google.android.inputmethod.latin
 
-REM Enable Gboard IME
+echo Enabling Gboard IME...
 adb shell ime enable com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
 
-REM Set Gboard as default
+echo Setting Gboard as default IME...
 adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
 
 echo --------------------------------------------------
