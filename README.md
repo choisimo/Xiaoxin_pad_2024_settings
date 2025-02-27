@@ -32,9 +32,10 @@
 
 1. **xiaoxin_setup.bat** 파일을 PC에 다운로드  
 2. (선택) **수동 다운로드**: 만약 스크립트의 다운로드가 안 될 시, 아래 링크에서 직접 APK를 받으세요.  
-   - 구글 플레이 스토어: <https://drive.google.com/file/d/1Wqrf8qK_1Rg5uRU9MKOPbUxsaN5Wc7yH/view?usp=sharing>  
-   - 구글 플레이 서비스: <https://drive.google.com/file/d/1OV6x9WFw1sje9w2vtWM1JLEoSq8Fgl4S/view?usp=sharing>  
-   - SetEdit: <https://drive.google.com/file/d/112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e/view?usp=sharing>  
+   https://docs.google.com/uc?export=download&id=1Wqrf8qK_1Rg5uRU9MKOPbUxsaN5Wc7yH
+  https://docs.google.com/uc?export=download&id=112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e
+  https://docs.google.com/uc?export=download&id=1OV6x9WFw1sje9w2vtWM1JLEoSq8Fgl4S
+  https://docs.google.com/uc?export=download&id=1n6CrGQL0zCsWOyKgbJVy3iZyhQQrrDmQ
 3. **Xiaoxin Pad**를 USB로 연결한 뒤, **CMD**(명령 프롬프트)에서 `xiaoxin_setup.bat` 실행  
 4. 안내에 따라 **Pause** 시 멈출 때마다 Enter 키로 진행  
 5. 설치/제거 완료 후, 태블릿을 재부팅하고 Google Play 로그인이 정상 동작하는지, 불필요 앱이 제거되었는지 확인  
