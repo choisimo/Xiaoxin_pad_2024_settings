@@ -27,9 +27,9 @@ set PLAYSERVICES_URL=https://drive.google.com/file/d/1OV6x9WFw1sje9w2vtWM1JLEoSq
 set SETEDIT_URL=https://drive.google.com/file/d/112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e/view?usp=sharing
 
 REM Downloading (may end up with .html if Google blocks direct link)
-powershell -Command \"Invoke-WebRequest -Uri %PLAYSTORE_URL% -OutFile PlayStore.apk\"
-powershell -Command \"Invoke-WebRequest -Uri %PLAYSERVICES_URL% -OutFile PlayServices.apk\"
-powershell -Command \"Invoke-WebRequest -Uri %SETEDIT_URL% -OutFile SetEdit.apk\"
+powershell -Command "Invoke-WebRequest -Uri %PLAYSTORE_URL% -OutFile PlayStore.apk"
+powershell -Command "Invoke-WebRequest -Uri %PLAYSERVICES_URL% -OutFile PlayServices.apk"
+powershell -Command "Invoke-WebRequest -Uri %SETEDIT_URL% -OutFile SetEdit.apk"
 
 echo --------------------------------------------------
 echo Check if the downloaded files are actual APK files.
@@ -101,4 +101,36 @@ REM adb shell pm uninstall --user 0 com.lenovo.levoice_agent
 echo --------------------------------------------------
 echo Uninstall done. Reboot your tablet and verify.
 echo --------------------------------------------------
+pause
+
+REM Step 5: Grant SetEdit permission and set system language to ko-KR
+
+echo [STEP 5] Setting up Korean locale and default Gboard...
+
+REM 5.1) If you want Gboard, you could do:
+echo Checking if Gboard is installed. (Optional step)
+REM adb install Gboard.apk   REM (Manually place Gboard.apk if you have it)
+
+REM 5.2) Grant SetEdit permission for WRITE_SECURE_SETTINGS
+adb shell pm grant by4a.setedit22 android.permission.WRITE_SECURE_SETTINGS
+
+REM 5.3) Attempt to set system locale to Korean (ko-KR)
+REM Note: Some devices may require a reboot to reflect changes.
+
+adb shell settings put system system_locales ko-KR
+
+REM 5.4) Set Gboard as default IME (if installed). For example:
+REM Gboard package name is typically com.google.android.inputmethod.latin
+
+REM Enable Gboard IME
+adb shell ime enable com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
+
+REM Set Gboard as default
+adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
+
+echo --------------------------------------------------
+echo Locale set to ko-KR (via SetEdit) and Gboard set as default.
+echo If changes do not take effect, reboot your tablet.
+
+echo Script completed.
 pause
