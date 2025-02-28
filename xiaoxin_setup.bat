@@ -20,37 +20,86 @@ echo -------------------------------------------
 echo If more than one device is listed, use -s <serial> or remove extra devices.
 pause
 
-REM Step 1: Download APKs from Google Drive (may fail)
-echo [STEP 1] Attempting to download APKs via PowerShell...
+REM Step 1: APK Installation - Alternative Method
+echo [STEP 1] APK Installation Options:
+
+echo 1. Manual APK installation (recommended)
+echo 2. Try direct download from Google Drive (may fail)
+choice /C 12 /M "Select option"
+
+if errorlevel 2 goto TryDownload
+if errorlevel 1 goto ManualInstall
+
+:TryDownload
+echo [OPTION 2] Attempting to download APKs via PowerShell...
 
 set PLAYSTORE_URL=https://docs.google.com/uc?export=download&id=1Wqrf8qK_1Rg5uRU9MKOPbUxsaN5Wc7yH
 set SETEDIT_URL=https://docs.google.com/uc?export=download&id=112hxb1h8KAdR1DdAExtyGdS2pMnVgE0e
 set PLAYSERVICES_URL=https://docs.google.com/uc?export=download&id=1OV6x9WFw1sje9w2vtWM1JLEoSq8Fgl4S
 set GBOARD_URL=https://docs.google.com/uc?export=download&id=1n6CrGQL0zCsWOyKgbJVy3iZyhQQrrDmQ
 
-REM Download them (if direct link fails, the result may be HTML):
-powershell -Command "Invoke-WebRequest -Uri %PLAYSTORE_URL% -OutFile PlayStore.apk"
-powershell -Command "Invoke-WebRequest -Uri %SETEDIT_URL% -OutFile SetEdit.apk"
-powershell -Command "Invoke-WebRequest -Uri %PLAYSERVICES_URL% -OutFile PlayServices.apk"
-powershell -Command "Invoke-WebRequest -Uri %GBOARD_URL% -OutFile Gboard.apk"
+REM Create a temp directory for downloads
+mkdir temp_apks 2>nul
+cd temp_apks
+
+REM Download them with better error handling:
+echo Downloading PlayStore.apk...
+powershell -Command "try { Invoke-WebRequest -Uri '%PLAYSTORE_URL%' -OutFile 'PlayStore.apk' } catch { Write-Output 'Download failed!' }"
+
+echo Downloading SetEdit.apk...
+powershell -Command "try { Invoke-WebRequest -Uri '%SETEDIT_URL%' -OutFile 'SetEdit.apk' } catch { Write-Output 'Download failed!' }"
+
+echo Downloading PlayServices.apk...
+powershell -Command "try { Invoke-WebRequest -Uri '%PLAYSERVICES_URL%' -OutFile 'PlayServices.apk' } catch { Write-Output 'Download failed!' }"
+
+echo Downloading Gboard.apk...
+powershell -Command "try { Invoke-WebRequest -Uri '%GBOARD_URL%' -OutFile 'Gboard.apk' } catch { Write-Output 'Download failed!' }"
 
 echo --------------------------------------------------
-echo Check if the downloaded files are real APK files.
-echo If they are HTML or 0KB, please manually download.
-pause
+echo Checking downloaded APK files...
+powershell -Command "Get-ChildItem -Filter *.apk | ForEach-Object { Write-Output ($_.Name + ' - ' + [math]::Round($_.Length/1KB, 2) + ' KB') }"
 
-REM Step 2: Install each APK
-echo [STEP 2] Installing PlayStore, PlayServices, SetEdit, Gboard...
-adb install PlayStore.apk
-adb install PlayServices.apk
-adb install SetEdit.apk
-adb install Gboard.apk
+echo --------------------------------------------------
+echo IMPORTANT: Google Drive often blocks complete APK downloads.
+echo If files are small (under 100KB) or HTML files, use manual installation.
+choice /C YN /M "Continue with installation anyway"
+if errorlevel 2 goto ManualInstall
+goto InstallAPKs
+
+:ManualInstall
+echo [OPTION 1] Manual APK Installation
+echo --------------------------------------------------
+echo Please download these APKs manually and place them in a folder:
+echo - Google Play Store
+echo - Google Play Services
+echo - SetEdit
+echo - Gboard
+echo --------------------------------------------------
+echo Enter the full path to the folder containing your APKs:
+set /p APK_FOLDER=
+
+cd /d "%APK_FOLDER%"
+if %errorlevel% neq 0 (
+    echo Invalid folder path! Please try again.
+    goto ManualInstall
+)
+
+:InstallAPKs
+echo [STEP 2] Installing APKs...
+for %%f in (*.apk) do (
+    echo Installing %%f...
+    adb install "%%f"
+    if %errorlevel% neq 0 (
+        echo WARNING: Failed to install %%f
+    ) else (
+        echo Successfully installed %%f
+    )
+)
+
+cd /d "%~dp0"
 
 echo -------------------------------------------
-echo Make sure installation succeeded. If any fails:
-echo  - Possibly rename or re-download the actual .apk
-
-echo  - Then run 'adb install <filename>' manually
+echo APK installation completed.
 pause
 
 REM Step 3: Bloatware disable
@@ -70,10 +119,6 @@ adb shell pm disable-user --user 0 com.lenovo.lfh.tianjiao.tablet
 adb shell pm disable-user --user 0 com.tbsmart.levision
 adb shell pm disable-user --user 0 com.tblenovo.center
 adb shell pm disable-user --user 0 com.tblenovo.tabpushout
-
-REM Optional Lenovo Voice apps example:
-REM adb shell pm disable-user --user 0 com.lenovo.levoice.caption
-REM adb shell pm disable-user --user 0 com.lenovo.levoice_agent
 
 echo --------------------------------------------------
 echo Disabled packages. Reboot and test for a few days.
@@ -99,37 +144,45 @@ adb shell pm uninstall --user 0 com.tbsmart.levision
 adb shell pm uninstall --user 0 com.tblenovo.center
 adb shell pm uninstall --user 0 com.tblenovo.tabpushout
 
-REM Optional Lenovo Voice apps example:
-REM adb shell pm uninstall --user 0 com.lenovo.levoice.caption
-REM adb shell pm uninstall --user 0 com.lenovo.levoice_agent
-
 echo --------------------------------------------------
 echo Uninstall done. Reboot your tablet and verify.
 echo --------------------------------------------------
 pause
 
 REM Step 5: Grant SetEdit permission and set system language to ko-KR
-
 echo [STEP 5] Setting up Korean locale and default Gboard...
 
-REM 5.2) Grant SetEdit permission for WRITE_SECURE_SETTINGS
-adb shell pm grant by4a.setedit22 android.permission.WRITE_SECURE_SETTINGS
+REM 5.1) Check if SetEdit is installed
+adb shell pm list packages | findstr "by4a.setedit22"
+if %errorlevel% neq 0 (
+    echo WARNING: SetEdit not found! Please install it first.
+    pause
+) else (
+    REM 5.2) Grant SetEdit permission for WRITE_SECURE_SETTINGS
+    adb shell pm grant by4a.setedit22 android.permission.WRITE_SECURE_SETTINGS
+    echo SetEdit permissions granted.
+)
 
 REM 5.3) Attempt to set system locale to Korean (ko-KR)
 adb shell settings put system system_locales ko-KR
+echo System locale set to Korean.
 
-REM 5.4) Set Gboard as default IME
-REM Gboard package name is typically com.google.android.inputmethod.latin
-
-echo Enabling Gboard IME...
-adb shell ime enable com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
-
-echo Setting Gboard as default IME...
-adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
+REM 5.4) Check if Gboard is installed
+adb shell pm list packages | findstr "com.google.android.inputmethod.latin"
+if %errorlevel% neq 0 (
+    echo WARNING: Gboard not found! Please install it first.
+    pause
+) else (
+    REM Set Gboard as default IME
+    echo Enabling Gboard IME...
+    adb shell ime enable com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
+    
+    echo Setting Gboard as default IME...
+    adb shell ime set com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME
+    echo Gboard set as default keyboard.
+)
 
 echo --------------------------------------------------
-echo Locale set to ko-KR (via SetEdit) and Gboard set as default.
-echo If changes do not take effect, reboot your tablet.
-
-echo Script completed.
+echo Setup completed. Please reboot your tablet.
+echo If changes do not take effect, check installation status.
 pause
